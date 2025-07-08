@@ -16,12 +16,12 @@
 
 ---
 
-## 📌 Project Objective
+##  Project Objective
 > Simulate a real-world scenario where a misconfigured virtual machine is exposed to the public internet, and investigate it for brute-force login attempts and potential unauthorized access using Defender for Endpoint and KQL queries.
 
 ---
 
-## 🧰 Tools & Technologies
+##  Tools & Technologies
 - **Platform:** Azure VM (windows-target-1 or custom)
 - **OS:** Windows 10
 - **Tools:** Microsoft Defender for Endpoint, Log Analytics, PowerShell
@@ -29,7 +29,7 @@
 
 ---
 
-## 🧠 Skills Gained / Focus Areas
+##  Skills Gained / Focus Areas
 - Identified failed and successful logon attempts from external IPs
 - Correlated activity with brute force behavior
 - Used MITRE ATT&CK framework to assess tactics and techniques
@@ -37,14 +37,14 @@
 
 ---
 
-## 🧪 Environment Setup
+##  Environment Setup
 > Used an Azure VM exposed to the internet. Let the VM run for ~90 minutes to attract brute force attempts from bots or bad actors. Alternatively, used `windows-target-1` honeypot for analysis.
 
 ![Environment Setup](assets/images/setup.jpg)
 
 ---
 
-## 🛠️ Walkthrough
+##  Walkthrough
 1. [Step 1: Preparation](#step-1-preparation)
 2. [Step 2: Data Collection](#step-2-data-collection)
 3. [Step 3: Data Analysis](#step-3-data-analysis)
@@ -69,12 +69,17 @@
 
 ---
 
-### ✅ Step 3: Data Analysis
-> Ran the following KQL queries:
+## ✅ Step 3: Data Analysis
+
+> Ran the following KQL queries to investigate **external login attempts**, **internet exposure window**, and **failed brute-force activity** on `cavada-cyber-pc`.
+
+---
+
+###  Cavada-cyber-pc – Bad Actor Login Attempts
 
 ```kql
-// Top IPs by failed logons
 DeviceLogonEvents
+| where DeviceName == "cavada-cyber-pc"
 | where LogonType has_any("Network", "Interactive", "RemoteInteractive", "Unlock")
 | where ActionType == "LogonFailed"
 | where isnotempty(RemoteIP)
@@ -82,31 +87,47 @@ DeviceLogonEvents
 | order by Attempts
 ```
 
-```kql
-// Check if any of those IPs later logged in successfully
-let RemoteIPsInQuestion = dynamic(["119.42.115.235","183.81.169.238","74.39.190.50"]);
-DeviceLogonEvents
-| where LogonType has_any("Network", "Interactive", "RemoteInteractive", "Unlock")
-| where ActionType == "LogonSuccess"
-| where RemoteIP has_any(RemoteIPsInQuestion)
-```
+ **Purpose:** Identify external IP addresses that repeatedly failed to log into `cavada-cyber-pc`.
+
+---
+
+###  Cavada-cyber-pc – Internet Exposure Window (July 1–7, 2025)
 
 ```kql
-// Identify IPs with both failed and successful logons
-let FailedLogons = DeviceLogonEvents
-| where LogonType has_any("Network", "Interactive", "RemoteInteractive", "Unlock")
-| where ActionType == "LogonFailed"
-| where isnotempty(RemoteIP)
-| summarize FailedLogonAttempts = count() by ActionType, RemoteIP, DeviceName;
-let SuccessfulLogons = DeviceLogonEvents
-| where LogonType has_any("Network", "Interactive", "RemoteInteractive", "Unlock")
-| where ActionType == "LogonSuccess"
-| where isnotempty(RemoteIP)
-| summarize SuccessfulLogons = count() by ActionType, RemoteIP, DeviceName, AccountName;
-FailedLogons
-| join SuccessfulLogons on RemoteIP
-| project RemoteIP, DeviceName, FailedLogonAttempts, SuccessfulLogons, AccountName
+DeviceInfo
+| where DeviceName == "cavada-cyber-pc"
+| where IsInternetFacing == true
+| order by Timestamp desc
 ```
+
+ **Result:**
+- **Exposed Start:** `Jul 1, 2025 10:34:38 AM`
+- **Exposed End:** `Jul 7, 2025 11:11:52 PM`
+
+ **Purpose:** Confirms the timeframe when the device was externally reachable—critical context for login attempt analysis.
+
+---
+
+###  Cavada-cyber-pc – Failed Public Logon Attempts (Past 7 Days)
+
+```kql
+DeviceLogonEvents
+| where ActionType == "LogonFailed"
+| where RemoteIPType == "Public"
+| where Timestamp > ago(7d)
+| summarize
+   FailedAttempts = count(),
+   FirstSeen = min(Timestamp),
+   LastSeen = max(Timestamp)
+   by
+   DeviceName,
+   RemoteIP,
+   RemoteDeviceName,
+   AccountName
+| order by FailedAttempts desc
+```
+
+ **Purpose:** Surfaces the number of failed logins per external IP, device name, and account—helpful in spotting brute-force activity targeting `cavada-cyber-pc`.
 
 ---
 
