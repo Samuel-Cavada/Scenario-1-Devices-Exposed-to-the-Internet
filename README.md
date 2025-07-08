@@ -87,6 +87,8 @@ DeviceLogonEvents
 | order by Attempts
 ```
 
+![Raw Image - Cavada-cyber-pc – Bad Actor Login Attempts)](https://raw.githubusercontent.com/Samuel-Cavada/Scenario-1-Devices-Exposed-to-the-Internet/main/images/S1DE6.png)
+
  **Purpose:** Identify external IP addresses that repeatedly failed to log into `cavada-cyber-pc`.
 
 ---
@@ -103,6 +105,9 @@ DeviceInfo
  **Result:**
 - **Exposed Start:** `Jul 1, 2025 10:34:38 AM`
 - **Exposed End:** `Jul 7, 2025 11:11:52 PM`
+
+![Raw Image - Cavada-cyber-pc – Internet Exposure Window (July 1–7, 2025)](https://raw.githubusercontent.com/Samuel-Cavada/Scenario-1-Devices-Exposed-to-the-Internet/main/images/S1DE4.png)
+
 
  **Purpose:** Confirms the timeframe when the device was externally reachable—critical context for login attempt analysis.
 
@@ -126,6 +131,8 @@ DeviceLogonEvents
    AccountName
 | order by FailedAttempts desc
 ```
+![Raw Image - Failed Public Logon Attempts (Past 7 Days) Screenshot](https://raw.githubusercontent.com/Samuel-Cavada/Scenario-1-Devices-Exposed-to-the-Internet/main/images/S1DE3.png)
+
 
  **Purpose:** Surfaces the number of failed logins per external IP, device name, and account—helpful in spotting brute-force activity targeting `cavada-cyber-pc`.
 
