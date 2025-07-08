@@ -38,9 +38,8 @@
 ---
 
 ##  Environment Setup
-> Used an Azure VM exposed to the internet. Let the VM run for ~90 minutes to attract brute force attempts from bots or bad actors. Alternatively, used `windows-target-1` honeypot for analysis.
+> Used an Azure VM exposed to the internet. Let the VM run for a few days to attract brute force attempts from bots or bad actors. Alternatively, used `Cavada-cyber-pc` honeypot for analysis.
 
-![Environment Setup](assets/images/setup.jpg)
 
 ---
 
@@ -56,7 +55,7 @@
 ---
 
 ### ✅ Step 1: Preparation
-> Developed a hypothesis: Devices exposed to the public internet without lockout policies may be vulnerable to brute force attacks resulting in unauthorized access.
+> Devices exposed to the public internet without lockout policies are vulnerable to brute force attacks, potentially leading to unauthorized access. In this case, the Azure NSG firewall rule allowed inbound traffic from all IPs, leaving the device open to repeated login attempts.
 
 ---
 
@@ -141,7 +140,35 @@ DeviceLogonEvents
 ### ✅ Step 4: Investigation
 > Investigated whether successful logons followed a pattern of repeated failures  
 > Checked timelines, account names, and source IPs  
-> Mapped findings to TTPs in the **MITRE ATT&CK** framework (e.g., T1110 – Brute Force)
+> Mapped findings to TTPs (Tactics, Techniques, and Procedures) in the **MITRE ATT&CK** framework 
+
+####  Initial Access
+
+- **T1078.001 – Valid Accounts: Local Accounts**  
+  Repeated login attempts suggest an attempt to discover or abuse valid local credentials.
+
+- **T1110 – Brute Force**  
+  Generic brute force technique used to gain unauthorized access.
+
+- **T1110.001 – Brute Force: Password Guessing**  
+  Numerous failed login attempts from a public IP imply password guessing.
+
+- **T1110.003 – Brute Force: Password Spraying**  
+  If multiple usernames are tried with a few common passwords.
+
+
+
+#### Defense Evasion *(If Successful Logins Detected)*
+
+- **T1078 – Valid Accounts**  
+  An attacker may use valid credentials to evade detection and maintain access without triggering alerts.
+
+
+
+####  Discovery *(If Enumeration Behavior Is Present)*
+
+- **T1087 – Account Discovery**  
+  Brute-force attempts across many account names may indicate account probing or enumeration behavior.
 
 ---
 
@@ -171,8 +198,7 @@ DeviceLogonEvents
 ---
 
 ## 📝 Timeline Summary and Findings
-- Brute-force attempts detected on multiple VMs  
-- At least one successful logon traced to previously failing IP  
+- Brute-force attempts detected on multiple VMs    
 - Attack leveraged lack of lockout policy  
 - Post-compromise activity was minimal but suspicious
 
